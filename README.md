@@ -25,7 +25,16 @@ deep learnig models.
 *   `app.py` - The main Streamlit web application script containing UI configurations and the feature extraction pipeline.
 *   `plant_disease_model.joblib` - The pre-trained Random Forest model containing the diagnostic intelligence.
 *   `requirements.txt` - Configuration file listing all project dependencies for seamless replication.
+---
 
+## 📊 Dataset Availability
+The structured dataset used for training this model is larger than 25MB and is hosted externally on Google Drive. 
+You can download the dataset directly from the link below:
+
+*   **Dataset File:** `leaf_features.csv` (27.6 MB)
+*   **Download Link:** [Click here to download leaf_features.csv from Google Drive](https://drive.google.com/file/d/1CtNjJ6AC9kb2cxoztfGyj_llY6Hhx576/view?usp=sharing)
+
+---
 ### 1. Prerequisites
 Ensure you have Python 3.10 installed on your local machine.
 
