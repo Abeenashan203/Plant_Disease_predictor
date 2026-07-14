@@ -11,71 +11,84 @@ import streamlit as st
 import cv2
 import numpy as np
 import joblib
+import os
+import urllib.request
 from PIL import Image
 from scipy.stats import skew
-from skimage.feature import graycomatrix,graycoprops
+from skimage.feature import graycomatrix, graycoprops
 
+# the function thet take data from google run itself
 @st.cache_resource
 def load_model():
-  return joblib.load('plant_disease_model.joblib')
+    model_filename = 'plant_disease_model.joblib'
+    
+    if not os.path.exists(model_filename):
+        with st.spinner("the file is downloading... please wait..."):
+            file_id = "1JKsGhoUL6Zw49ZbG6k7Gdbbx8o_9GhoH" 
+            download_url = f"https://docs.google.com/uc?export=download&id={file_id}"
+            urllib.request.urlretrieve(download_url, model_filename)
+            
+    return joblib.load(model_filename)
+
+# run the model
 try:
-  model=load_model()
+    model = load_model()
 except Exception as e:
-  st.error(f"can't find the the file {e}.confirm firstly is the folder is exists ")
+    st.error(f"can't find or download the file {e}. confirm firstly if the Google Drive ID is correct and sharing is set to public.")
 
 def extract_features_from_image(pil_image):
-  # convert PIL image to  OpenCV (numpy array) format
-    img=np.array(pil_image)
+    # convert PIL image to OpenCV (numpy array) format
+    img = np.array(pil_image)
     # Streamlit give RGB image, OpenCV-requires BGR image
-    img=cv2.cvtColor(img,cv2.COLOR_RGB2BGR)
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
     # resize the image to keep all inputs in same size (256x256)
-    img=cv2.resize(img,(256,256))
+    img = cv2.resize(img, (256, 256))
 
     # Leaf Segmentation (Otsu's Thresholding)
-    gray=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-    _, mask=cv2.threshold(gray,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    _, mask = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
     # Color space conversion (HSV and Lab)
-    hsv=cv2.cvtColor(img,cv2.COLOR_BGR2HSV)
-    lab=cv2.cvtColor(img,cv2.COLOR_BGR2LAB)
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
 
-    leaf_pixels_hsv=hsv[mask==255]
-    leaf_pixels_lab=lab[mask==255]
+    leaf_pixels_hsv = hsv[mask == 255]
+    leaf_pixels_lab = lab[mask == 255]
 
-    if len(leaf_pixels_hsv)==0:
+    if len(leaf_pixels_hsv) == 0:
         return None
 
-    features=[]
+    features = []
 
-    # Color features (Color moments:Mean,Std,skew)
-    channels=[
-        leaf_pixels_hsv[:,0], # H channel
-        leaf_pixels_hsv[:,1], # S channel
-        leaf_pixels_lab[:,1], # A channel
-        leaf_pixels_lab[:,2]  # B channel
+    # Color features (Color moments: Mean, Std, skew)
+    channels = [
+        leaf_pixels_hsv[:, 0], # H channel
+        leaf_pixels_hsv[:, 1], # S channel
+        leaf_pixels_lab[:, 1], # A channel
+        leaf_pixels_lab[:, 2]  # B channel
     ]
 
-    # for every channel measure Mean,Std,Skew
+    # for every channel measure Mean, Std, Skew
     for ch in channels:
         features.append(np.mean(ch))
         features.append(np.std(ch))
         features.append(skew(ch))
 
     # Texture features using GLCM
-    glcm=graycomatrix(gray,distances=[1],angles=[0,np.pi/4,np.pi/2,3*np.pi/4],
-                        levels=256,symmetric=True,normed=True)
+    glcm = graycomatrix(gray, distances=[1], angles=[0, np.pi/4, np.pi/2, 3*np.pi/4],
+                        levels=256, symmetric=True, normed=True)
 
-    features.append(np.mean(graycoprops(glcm,'contrast')))
-    features.append(np.mean(graycoprops(glcm,'homogeneity')))
-    features.append(np.mean(graycoprops(glcm,'energy')))
-    features.append(np.mean(graycoprops(glcm,'correlation')))
+    features.append(np.mean(graycoprops(glcm, 'contrast')))
+    features.append(np.mean(graycoprops(glcm, 'homogeneity')))
+    features.append(np.mean(graycoprops(glcm, 'energy')))
+    features.append(np.mean(graycoprops(glcm, 'correlation')))
 
-    # to predict the image convert 2D (1-Row,16-Columns)
-    return np.array(features).reshape(1,-1)
+    # to predict the image convert 2D (1-Row, 16-Columns)
+    return np.array(features).reshape(1, -1)
 
 # 3. Streamlit (User Interface)
-st.set_page_config(page_title="PLANT DISEASE PREDICTOR",page_icon="🌾")
+st.set_page_config(page_title="PLANT DISEASE PREDICTOR", page_icon="🌾")
 
 st.title("🌾 Disease Identifier Application")
 st.write("Upload your image of your plant and find the plant is infected or healthy.")
@@ -84,7 +97,7 @@ st.write("Upload your image of your plant and find the plant is infected or heal
 uploaded_file = st.file_uploader("Upload image of leaf ...", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
-    #show the uploaded image
+    # show the uploaded image
     image = Image.open(uploaded_file)
     st.image(image, caption='UPLOADED IMAGE', use_container_width=True)
 
@@ -94,10 +107,10 @@ if uploaded_file is not None:
             features = extract_features_from_image(image)
 
             if features is None:
-                st.error("can't identify the image.upload a clear image")
+                st.error("can't identify the image. upload a clear image")
             else:
                 # test using the model
-                prediction=model.predict(features)
+                prediction = model.predict(features)
 
                 # show the output
                 st.subheader("Predicted Decision:")
