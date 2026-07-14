@@ -6,3 +6,4 @@ pillow
 scipy
 scikit-image
 gdown
+scikit-learn
