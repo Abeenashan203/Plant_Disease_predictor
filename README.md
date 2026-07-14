@@ -27,7 +27,7 @@ deep learnig models.
 *   `requirements.txt` - Configuration file listing all project dependencies for seamless replication.
 
 ### 1. Prerequisites
-Ensure you have Python 3.8+ installed on your local machine.
+Ensure you have Python 3.10 installed on your local machine.
 
 ### 2. Installation & Setup
 Clone the repository and install the required dependencies:
