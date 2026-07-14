@@ -94,33 +94,96 @@ def extract_features_from_image(pil_image):
     return np.array(features).reshape(1, -1)
 
 # 3. Streamlit (User Interface)
-st.set_page_config(page_title="PLANT DISEASE PREDICTOR", page_icon="🌾")
+st.set_page_config(
+    page_title="PLANT DISEASE PREDICTOR", 
+    page_icon="🌾",
+    layout="centered"
+)
 
+# set(Background Image)
+def add_bg_from_url():
+    st.markdown(
+         f"""
+         <style>
+         .stApp {{
+             background-image: url("https://images.unsplash.com/photo-1502082553048-f009c37129b9?q=80&w=2070&auto=format&fit=crop");
+             background-attachment: fixed;
+             background-size: cover;
+         }}
+         /* set dark backround */
+         .main .block-container {{
+             background-color: rgba(0, 0, 0, 0.75);
+             padding: 2.5rem;
+             border-radius: 15px;
+             color: #ffffff;
+             box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.5);
+         }}
+         h1, h2, h3, p, span {{
+             color: #ffffff !important;
+         }}
+         </style>
+         """,
+         unsafe_allow_html=True
+    )
+
+# apply backround picture
+add_bg_from_url()
+
+# ----------------- SIDEBAR (SLIDE BAR) -----------------
+st.sidebar.title("⚙️ Control Panel")
+st.sidebar.write("Configure your prediction settings below:")
+
+#select input method (Input Method)
+input_option = st.sidebar.radio(
+    "Choose Input Method:", 
+    ("📁 Upload Image File", "📸 Take a Photo with Camera")
+)
+
+st.sidebar.markdown("---")
+
+# (Leaf Prediction Tips)
+st.sidebar.subheader("💡 Tips for Best Prediction")
+st.sidebar.markdown("""
+* **Good Lighting:**
+* **Focus on Leaf:** 
+* **Single Leaf:** 
+""")
+
+st.sidebar.markdown("---")
+st.sidebar.info("Designed & Developed for Plant Health Monitoring.")
+
+# ----------------- MAIN PAGE CONTENT -----------------
 st.title("🌾 Disease Identifier Application")
-st.write("Upload your image of your plant and find the plant is infected or healthy.")
+st.write("Upload an image or use your camera in the sidebar to check if your plant is infected or healthy.")
 
-# The path of uploading
-uploaded_file = st.file_uploader("Upload image of leaf ...", type=["jpg", "jpeg", "png"])
+# shou input option in slide bar
+uploaded_file = None
+if "Upload Image" in input_option:
+    uploaded_file = st.file_uploader("Upload image of leaf ...", type=["jpg", "jpeg", "png"])
+else:
+    uploaded_file = st.camera_input("Take a picture of the plant leaf...")
 
+# prediction and classification section
 if uploaded_file is not None:
-    # show the uploaded image
+    # show the image
     image = Image.open(uploaded_file)
-    st.image(image, caption='UPLOADED IMAGE', use_container_width=True)
+    st.image(image, caption='SELECTED IMAGE', use_container_width=True)
 
     # Predict Button
-    if st.button("test the leaf"):
-        with st.spinner("the feature extracted and calculating..."):
+    if st.button("Test the Leaf"):
+        with st.spinner("Extracting features and calculating... Please wait."):
             features = extract_features_from_image(image)
 
             if features is None:
-                st.error("can't identify the image. upload a clear image")
+                st.error("Can't identify the image. Please upload or take a clearer image of a leaf.")
             else:
-                # test using the model
+                # testing
                 prediction = model.predict(features)
 
-                # show the output
+                # classificaation part
                 st.subheader("Predicted Decision:")
                 if prediction[0] == 0:
-                    st.success("🎉 the Leaf is Healthy! (Healthy)")
+                    st.success("🎉 **The Leaf is Healthy! (Healthy)**")
+                    st.balloons() 
                 else:
-                    st.error("🚨 The Leaf is infected! (Infected)")
+                    st.error("🚨 **The Leaf is Infected! (Infected)**")
