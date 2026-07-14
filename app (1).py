@@ -14,19 +14,25 @@ import joblib
 import os
 import urllib.request
 from PIL import Image
+import gdown
 from scipy.stats import skew
 from skimage.feature import graycomatrix, graycoprops
 
 # the function thet take data from google run itself
+import os
+import gdown
+import os
+import gdown
 @st.cache_resource
 def load_model():
     model_filename = 'plant_disease_model.joblib'
     
     if not os.path.exists(model_filename):
-        with st.spinner("the file is downloading... please wait..."):
+        with st.spinner("file is downloading... please wait..."):
+            # enter your drive id
             file_id = "1JKsGhoUL6Zw49ZbG6k7Gdbbx8o_9GhoH" 
-            download_url = f"https://docs.google.com/uc?export=download&id={file_id}"
-            urllib.request.urlretrieve(download_url, model_filename)
+            download_url = f"https://drive.google.com/uc?id={file_id}"
+            gdown.download(download_url, model_filename, quiet=False)
             
     return joblib.load(model_filename)
 
